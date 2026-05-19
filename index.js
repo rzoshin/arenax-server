@@ -50,8 +50,6 @@ async function run() {
       res.send(result);
     })
 
-    
-
     // Get a specific facility by ID
     app.get('/facilities/:id', async (req, res) => {
       const id = req.params.id;
@@ -62,13 +60,35 @@ async function run() {
       res.send(result);
     })
 
-    //
+    // Update a specific facility by ID
+    app.patch('/facilities/:id', async (req, res) => {
+      const id = req.params.id;
+      const updatedData = req.body;
+
+      const result = await facilitiesCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: updatedData }
+      )
+      res.send(result);
+    })
+
+    // Delete a specific facility by ID
+    app.delete('/facilities/:id', async (req, res) => {
+      const id = req.params.id;
+      const result = await facilitiesCollection.deleteOne(
+        { _id: new ObjectId(id) }
+      )
+      res.send(result);
+    })
+    
+    // Add new booking to the database
     app.post("/bookings", async (req, res) => {
       const bookingData = req.body;
       const result = await bookingCollection.insertOne(bookingData);
       res.send(result);
     })
 
+    // Get bookings for a specific user by user ID
     app.get("/bookings/:userId", async (req, res) => {
       const userId = req.params.userId;
       const result = bookingCollection.find({ userId });
