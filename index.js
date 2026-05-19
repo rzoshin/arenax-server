@@ -28,14 +28,58 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+
 
     const db = client.db("arenax");
     const facilitiesCollection = db.collection("facilities");
     const bookingCollection = db.collection("bookings");
+
+    // Get all facilities from the database
+    app.get('/facilities', async (req, res) => {
+      const { ownerEmail } = req.query
+      const query = ownerEmail ? { ownerEmail } : {}
+      const facilities = await facilitiesCollection.find(query).toArray()
+      res.send(facilities)
+    })
+
+    // Add new facility to the database
+    app.post('/facilities', async (req, res) => {
+      const facilityData = req.body;
+      const result = await facilitiesCollection.insertOne(facilityData);
+
+      res.send(result);
+    })
+
     
+
+    // Get a specific facility by ID
+    app.get('/facilities/:id', async (req, res) => {
+      const id = req.params.id;
+
+      const result = await facilitiesCollection.findOne(
+        { _id: new ObjectId(id) }
+      )
+      res.send(result);
+    })
+
+    //
+    app.post("/bookings", async (req, res) => {
+      const bookingData = req.body;
+      const result = await bookingCollection.insertOne(bookingData);
+      res.send(result);
+    })
+
+    app.get("/bookings/:userId", async (req, res) => {
+      const userId = req.params.userId;
+      const result = bookingCollection.find({ userId });
+      const bookings = await result.toArray();
+      res.send(bookings);
+    })
+
+    // Send a ping to confirm a successful connection
+    await client.db("admin").command({ ping: 1 });
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
