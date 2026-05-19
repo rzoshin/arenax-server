@@ -80,7 +80,7 @@ async function run() {
       )
       res.send(result);
     })
-    
+
     // Add new booking to the database
     app.post("/bookings", async (req, res) => {
       const bookingData = req.body;
@@ -95,6 +95,16 @@ async function run() {
       const bookings = await result.toArray();
       res.send(bookings);
     })
+
+    app.delete('/bookings/:id', async (req, res) => {
+      const id = req.params.id;
+      const result = await bookingCollection.deleteOne(
+        { _id: new ObjectId(id) }
+      )
+      res.send(result);
+    })
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
