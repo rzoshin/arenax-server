@@ -6,6 +6,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 // Dotenv setup
 const dotenv = require('dotenv');
+const { createRemoteJWKSet, jwtVerify } = require('jose-cjs');
 dotenv.config();
 
 // Load environment variables from .env file
@@ -24,6 +25,28 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
+
+const JWKS = createRemoteJWKSet(new URL("http://localhost:3000/api/auth/jwks"));
+const verifyToken = async (req, res, next) => {
+  const header = req?.headers.authorization;
+  if(!header) {
+    return res.status(401).send({message: "Unauthorized"})
+  }
+  const token = header.split(" ")[1];
+  if(!token) {
+    return res.status(401).send({message: "Unauthorized"})
+  }
+  
+  try {
+    const {payload} = await jwtVerify(token, JWKS);
+    console.log(payload);
+    next()
+  }
+  catch (error) {
+    return res.status(401).send({message: "Unauthorized"})
+  }
+   
+}
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -51,7 +74,7 @@ async function run() {
     })
 
     // Get a specific facility by ID
-    app.get('/facilities/:id', async (req, res) => {
+    app.get('/facilities/:id', verifyToken, async (req, res,) => {
       const id = req.params.id;
 
       const result = await facilitiesCollection.findOne(
@@ -61,7 +84,7 @@ async function run() {
     })
 
     // Update a specific facility by ID
-    app.patch('/facilities/:id', async (req, res) => {
+    app.patch('/facilities/:id', verifyToken, async (req, res) => {
       const id = req.params.id;
       const updatedData = req.body;
 
@@ -73,7 +96,7 @@ async function run() {
     })
 
     // Delete a specific facility by ID
-    app.delete('/facilities/:id', async (req, res) => {
+    app.delete('/facilities/:id', verifyToken, async (req, res) => {
       const id = req.params.id;
       const result = await facilitiesCollection.deleteOne(
         { _id: new ObjectId(id) }
@@ -82,21 +105,21 @@ async function run() {
     })
 
     // Add new booking to the database
-    app.post("/bookings", async (req, res) => {
+    app.post("/bookings", verifyToken, async (req, res) => {
       const bookingData = req.body;
       const result = await bookingCollection.insertOne(bookingData);
       res.send(result);
     })
 
     // Get bookings for a specific user by user ID
-    app.get("/bookings/:userId", async (req, res) => {
+    app.get("/bookings/:userId", verifyToken, async (req, res) => {
       const userId = req.params.userId;
       const result = bookingCollection.find({ userId });
       const bookings = await result.toArray();
       res.send(bookings);
     })
 
-    app.delete('/bookings/:id', async (req, res) => {
+    app.delete('/bookings/:id', verifyToken, async (req, res) => {
       const id = req.params.id;
       const result = await bookingCollection.deleteOne(
         { _id: new ObjectId(id) }
