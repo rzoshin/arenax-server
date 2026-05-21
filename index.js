@@ -52,26 +52,20 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
 
-
     const db = client.db("arenax");
     const facilitiesCollection = db.collection("facilities");
     const bookingCollection = db.collection("bookings");
 
-    // Get all facilities from the database
+    // Get all facilities from the database according to some query parameters
     app.get('/facilities', async (req, res) => {
-  const { ownerEmail, search, type } = req.query;
-
-  const query = {};
-
-  if (ownerEmail) query.ownerEmail = ownerEmail;
-
-  if (search) query.facilityName = { $regex: search, $options: 'i' };
-
-  if (type && type !== 'All') query.facilityType = { $regex: `^${type}$`, $options: 'i' };
-
-  const facilities = await facilitiesCollection.find(query).toArray();
-  res.send(facilities);
-});
+    const { ownerEmail, search, type } = req.query;
+    const query = {};
+    if (ownerEmail) query.ownerEmail = ownerEmail;
+    if (search) query.facilityName = { $regex: search, $options: 'i' };
+    if (type && type !== 'All') query.facilityType = { $regex: `^${type}$`, $options: 'i' };
+    const facilities = await facilitiesCollection.find(query).toArray();
+    res.send(facilities);
+  });
 
     // Add new facility to the database
     app.post('/facilities', async (req, res) => {
@@ -92,7 +86,7 @@ async function run() {
     })
 
     // Update a specific facility by ID
-    app.patch('/facilities/:id', verifyToken, async (req, res) => {
+    app.patch('/facilities/:id', verifyToken, async(req, res) => {
       const id = req.params.id;
       const updatedData = req.body;
 
@@ -134,8 +128,6 @@ async function run() {
       )
       res.send(result);
     })
-
-
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
